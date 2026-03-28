@@ -8,7 +8,7 @@ use std::sync::Arc;
 use string_cache::DefaultAtom;
 use string_interner::StringInterner;
 
-use ustr::*;
+use fugue_ustr::*;
 
 use parking_lot::Mutex;
 
@@ -35,7 +35,7 @@ fn criterion_benchmark(c: &mut Criterion) {
     let s = raft.clone();
     c.bench_function("single raft ustr", move |b| {
         b.iter(|| {
-            unsafe { ustr::_clear_cache() };
+            unsafe { fugue_ustr::_clear_cache() };
             for s in s.iter().cycle().take(100_000) {
                 black_box(ustr(s));
             }
@@ -102,7 +102,7 @@ fn criterion_benchmark(c: &mut Criterion) {
                     }
 
                     b.iter(|| {
-                        unsafe { ustr::_clear_cache() };
+                        unsafe { fugue_ustr::_clear_cache() };
                         for _ in 0..num_threads {
                             tx1.send(()).unwrap();
                         }
@@ -262,7 +262,7 @@ fn criterion_benchmark(c: &mut Criterion) {
     let s = raft_large.clone();
     c.bench_function("raft large x1", move |b| {
         b.iter(|| {
-            unsafe { ustr::_clear_cache() };
+            unsafe { fugue_ustr::_clear_cache() };
             for s in s.iter().cycle().take(100_000) {
                 black_box(ustr(s));
             }
@@ -292,7 +292,7 @@ fn criterion_benchmark(c: &mut Criterion) {
             }
 
             b.iter(|| {
-                unsafe { ustr::_clear_cache() };
+                unsafe { fugue_ustr::_clear_cache() };
                 for _ in 0..num_threads {
                     tx1.send(()).unwrap();
                 }

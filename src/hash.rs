@@ -1,13 +1,103 @@
-use super::Ustr;
+use std::collections::{HashMap, HashSet};
+use std::hash::{BuildHasherDefault, Hasher};
+use std::ops::{Deref, DerefMut};
+
 use byteorder::{ByteOrder, NativeEndian};
-use std::{
-    collections::{HashMap, HashSet},
-    hash::{BuildHasherDefault, Hasher},
-};
+
+use super::Ustr;
 
 /// A standard `HashMap` using `Ustr` as the key type with a custom `Hasher`
 /// that just uses the precomputed hash for speed instead of calculating it.
-pub type UstrMap<V> = HashMap<Ustr, V, BuildHasherDefault<IdentityHasher>>;
+#[derive(Clone, Debug, PartialEq, Eq)]
+#[repr(transparent)]
+pub struct UstrMap<V>(HashMap<Ustr, V, BuildHasherDefault<IdentityHasher>>);
+
+impl<V> UstrMap<V> {
+    pub fn new() -> Self {
+        Self(HashMap::default())
+    }
+
+    pub fn with_capacity(capacity: usize) -> Self {
+        Self(HashMap::with_capacity_and_hasher(
+            capacity,
+            BuildHasherDefault::default(),
+        ))
+    }
+}
+
+impl<V> Default for UstrMap<V> {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+impl<V> Deref for UstrMap<V> {
+    type Target = HashMap<Ustr, V, BuildHasherDefault<IdentityHasher>>;
+
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
+
+impl<V> DerefMut for UstrMap<V> {
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        &mut self.0
+    }
+}
+
+impl<V> From<HashMap<Ustr, V, BuildHasherDefault<IdentityHasher>>> for UstrMap<V> {
+    fn from(map: HashMap<Ustr, V, BuildHasherDefault<IdentityHasher>>) -> Self {
+        Self(map)
+    }
+}
+
+impl<V> From<UstrMap<V>> for HashMap<Ustr, V, BuildHasherDefault<IdentityHasher>> {
+    fn from(map: UstrMap<V>) -> Self {
+        map.0
+    }
+}
+
+impl<V> FromIterator<(Ustr, V)> for UstrMap<V> {
+    fn from_iter<I: IntoIterator<Item = (Ustr, V)>>(iter: I) -> Self {
+        Self(HashMap::from_iter(iter))
+    }
+}
+
+impl<V> IntoIterator for UstrMap<V> {
+    type Item = (Ustr, V);
+    type IntoIter =
+        std::collections::hash_map::IntoIter<Ustr, V>;
+
+    fn into_iter(self) -> Self::IntoIter {
+        self.0.into_iter()
+    }
+}
+
+impl<'a, V> IntoIterator for &'a UstrMap<V> {
+    type Item = (&'a Ustr, &'a V);
+    type IntoIter =
+        std::collections::hash_map::Iter<'a, Ustr, V>;
+
+    fn into_iter(self) -> Self::IntoIter {
+        self.0.iter()
+    }
+}
+
+impl<'a, V> IntoIterator for &'a mut UstrMap<V> {
+    type Item = (&'a Ustr, &'a mut V);
+    type IntoIter =
+        std::collections::hash_map::IterMut<'a, Ustr, V>;
+
+    fn into_iter(self) -> Self::IntoIter {
+        self.0.iter_mut()
+    }
+}
+
+impl<V> Extend<(Ustr, V)> for UstrMap<V> {
+    fn extend<I: IntoIterator<Item = (Ustr, V)>>(&mut self, iter: I) {
+        self.0.extend(iter);
+    }
+}
 
 /// A standard `HashSet` using `Ustr` as the key type with a custom `Hasher`
 /// that just uses the precomputed hash for speed instead of calculating it.

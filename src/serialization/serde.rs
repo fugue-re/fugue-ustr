@@ -1,4 +1,4 @@
-use super::*;
+use crate::*;
 use serde::{
     de::{Deserialize, Deserializer, Error, SeqAccess, Visitor},
     ser::{Serialize, SerializeSeq, Serializer},
@@ -100,5 +100,23 @@ impl Serialize for Ustr {
         S: Serializer,
     {
         serializer.serialize_str(self.as_str())
+    }
+}
+
+impl<V: Serialize> Serialize for UstrMap<V> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        self.deref().serialize(serializer)
+    }
+}
+
+impl<'de, V: Deserialize<'de>> Deserialize<'de> for UstrMap<V> {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: Deserializer<'de>,
+    {
+        std::collections::HashMap::deserialize(deserializer).map(UstrMap::from)
     }
 }

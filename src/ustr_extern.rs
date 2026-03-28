@@ -1,4 +1,4 @@
-use ustr::Ustr;
+use fugue_ustr::Ustr;
 
 #[no_mangle]
 pub extern "C" fn ustr(chars: *const std::os::raw::c_char) -> Ustr {

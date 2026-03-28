@@ -25,9 +25,9 @@
 //! # Usage
 //!
 //! ```
-//! use ustr::{Ustr, ustr, ustr as u};
+//! use fugue_ustr::{Ustr, ustr, ustr as u};
 //!
-//! # unsafe { ustr::_clear_cache() };
+//! # unsafe { fugue_ustr::_clear_cache() };
 //! // Creation is quick and easy using either `Ustr::from` or the ustr function
 //! // and only one copy of any string is stored.
 //! let u1 = Ustr::from("the quick brown fox");
@@ -50,7 +50,7 @@
 //! // For best performance when using Ustr as key for a HashMap or HashSet,
 //! // you'll want to use the precomputed hash. To make this easier, just use
 //! // the UstrMap and UstrSet exports:
-//! use ustr::UstrMap;
+//! use fugue_ustr::UstrMap;
 //!
 //! // Key type is always `Ustr`.
 //! let mut map: UstrMap<usize> = UstrMap::default();
@@ -63,7 +63,7 @@
 //!
 //! ```
 //! # #[cfg(feature = "serde")] {
-//! use ustr::{Ustr, ustr};
+//! use fugue_ustr::{Ustr, ustr};
 //! let u_ser = ustr("serde");
 //! let json = serde_json::to_string(&u_ser).unwrap();
 //! let u_de : Ustr = serde_json::from_str(&json).unwrap();
@@ -71,19 +71,19 @@
 //! # }
 //! ```
 //!
-//! Since the cache is global, use the `ustr::DeserializedCache` dummy object to
+//! Since the cache is global, use the `fugue_ustr::DeserializedCache` dummy object to
 //! drive the deserialization.
 //!
 //! ```
 //! # #[cfg(feature = "serde")] {
-//! use ustr::{Ustr, ustr};
+//! use fugue_ustr::{Ustr, ustr};
 //! ustr("Send me to JSON and back");
-//! let json = serde_json::to_string(ustr::cache()).unwrap();
+//! let json = serde_json::to_string(fugue_ustr::cache()).unwrap();
 //!
 //! // ... some time later ...
-//! let _: ustr::DeserializedCache = serde_json::from_str(&json).unwrap();
-//! assert_eq!(ustr::num_entries(), 1);
-//! assert_eq!(ustr::string_cache_iter().collect::<Vec<_>>(), vec!["Send me to JSON and back"]);
+//! let _: fugue_ustr::DeserializedCache = serde_json::from_str(&json).unwrap();
+//! assert_eq!(fugue_ustr::num_entries(), 1);
+//! assert_eq!(fugue_ustr::string_cache_iter().collect::<Vec<_>>(), vec!["Send me to JSON and back"]);
 //! # }
 //! ```
 //!
@@ -180,7 +180,7 @@ mod bumpalloc;
 
 mod stringcache;
 pub use stringcache::*;
-#[cfg(feature = "serde")]
+#[cfg(any(feature = "serde", feature = "rkyv"))]
 pub mod serialization;
 #[cfg(feature = "serde")]
 pub use serialization::DeserializedCache;
@@ -225,13 +225,13 @@ impl Ustr {
     /// # Examples
     ///
     /// ```
-    /// use ustr::{Ustr, ustr as u};
-    /// # unsafe { ustr::_clear_cache() };
+    /// use fugue_ustr::{Ustr, ustr as u};
+    /// # unsafe { fugue_ustr::_clear_cache() };
     ///
     /// let u1 = Ustr::from("the quick brown fox");
     /// let u2 = u("the quick brown fox");
     /// assert_eq!(u1, u2);
-    /// assert_eq!(ustr::num_entries(), 1);
+    /// assert_eq!(fugue_ustr::num_entries(), 1);
     /// ```
     pub fn from(string: &str) -> Ustr {
         let hash = {
@@ -265,8 +265,8 @@ impl Ustr {
     /// # Examples
     ///
     /// ```
-    /// use ustr::ustr as u;
-    /// # unsafe { ustr::_clear_cache() };
+    /// use fugue_ustr::ustr as u;
+    /// # unsafe { fugue_ustr::_clear_cache() };
     ///
     /// let u_fox = u("the quick brown fox");
     /// let words: Vec<&str> = u_fox.as_str().split_whitespace().collect();
@@ -294,8 +294,8 @@ impl Ustr {
     /// # Examples
     ///
     /// ```
-    /// use ustr::ustr as u;
-    /// # unsafe { ustr::_clear_cache() };
+    /// use fugue_ustr::ustr as u;
+    /// # unsafe { fugue_ustr::_clear_cache() };
     ///
     /// let u_fox = u("the quick brown fox");
     /// let len = unsafe {
@@ -675,13 +675,13 @@ pub fn total_capacity() -> usize {
 /// # Examples
 ///
 /// ```
-/// use ustr::ustr;
-/// # unsafe { ustr::_clear_cache() };
+/// use fugue_ustr::ustr;
+/// # unsafe { fugue_ustr::_clear_cache() };
 ///
 /// let u1 = ustr("the quick brown fox");
 /// let u2 = ustr("the quick brown fox");
 /// assert_eq!(u1, u2);
-/// assert_eq!(ustr::num_entries(), 1);
+/// assert_eq!(fugue_ustr::num_entries(), 1);
 /// ```
 #[inline]
 pub fn ustr(s: &str) -> Ustr {
@@ -694,8 +694,8 @@ pub fn ustr(s: &str) -> Ustr {
 /// # Examples
 ///
 /// ```
-/// use ustr::{ustr, existing_ustr};
-/// # unsafe { ustr::_clear_cache() };
+/// use fugue_ustr::{ustr, existing_ustr};
+/// # unsafe { fugue_ustr::_clear_cache() };
 ///
 /// let u1 = existing_ustr("the quick brown fox");
 /// let u2 = ustr("the quick brown fox");
@@ -714,12 +714,12 @@ pub fn existing_ustr(s: &str) -> Option<Ustr> {
 /// # Examples
 ///
 /// ```
-/// # use ustr::{Ustr, ustr, ustr as u};
+/// # use fugue_ustr::{Ustr, ustr, ustr as u};
 /// # #[cfg(feature="serde")]
 /// # {
-/// # unsafe { ustr::_clear_cache() };
+/// # unsafe { fugue_ustr::_clear_cache() };
 /// ustr("Send me to JSON and back");
-/// let json = serde_json::to_string(ustr::cache()).unwrap();
+/// let json = serde_json::to_string(fugue_ustr::cache()).unwrap();
 /// # }
 pub fn cache() -> &'static Bins {
     &STRING_CACHE
@@ -733,11 +733,11 @@ pub fn cache() -> &'static Bins {
 /// # Examples
 ///
 /// ```
-/// use ustr::ustr as u;
+/// use fugue_ustr::ustr as u;
 ///
 /// let _ = u("Hello");
 /// let _ = u(", World!");
-/// assert_eq!(ustr::num_entries(), 2);
+/// assert_eq!(fugue_ustr::num_entries(), 2);
 /// ```
 pub fn num_entries() -> usize {
     STRING_CACHE
@@ -815,11 +815,10 @@ lazy_static::lazy_static! {
 
 #[cfg(test)]
 mod tests {
-    use super::TEST_LOCK;
-    use lazy_static::lazy_static;
     use std::ffi::OsStr;
     use std::path::Path;
-    use std::sync::Mutex;
+
+    use super::TEST_LOCK;
 
     #[test]
     fn it_works() {
